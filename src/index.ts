@@ -1,4 +1,4 @@
-import { Application, Sprite } from 'pixi.js'
+import { Application, Assets, AssetsManifest, Sprite } from 'pixi.js'
 
 const app = new Application<HTMLCanvasElement>({
 	view: document.getElementById("pixi-canvas") as HTMLCanvasElement,
@@ -9,11 +9,30 @@ const app = new Application<HTMLCanvasElement>({
 	height: 480
 });
 
-const clampy: Sprite = Sprite.from("clampy.png");
 
-clampy.anchor.set(0.5);
+export const manifest:AssetsManifest = {
+	bundles: [
+		{
+			name : "bundleCharacter",
+			assets:
+			{
+				"Sonic" : "./sonic-adventure.png",
+				"Clampy" : "./clampy.png",
+			}
 
-clampy.x = 300;
-clampy.y = 300;
+		},
+	]
+}
 
-app.stage.addChild(clampy);
+async function init() {
+
+	await Assets.init({ manifest: manifest });
+
+	await Assets.loadBundle("bundleCharacter");
+
+	const sonic: Sprite = Sprite.from("sonic-adventure.png")
+
+	app.stage.addChild(sonic);
+}
+
+init();
