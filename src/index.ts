@@ -1,38 +1,53 @@
-import { Application, Assets, AssetsManifest, Sprite } from 'pixi.js'
+import { Application, Assets, Ticker } from 'pixi.js'
+import { manifest } from './manifest';
+import { Scene } from './Scene';
+import { Keyboard } from './utills/Keyboard';
+
 
 const app = new Application<HTMLCanvasElement>({
 	view: document.getElementById("pixi-canvas") as HTMLCanvasElement,
 	resolution: window.devicePixelRatio || 1,
 	autoDensity: true,
 	backgroundColor: 0x6495ed,
-	width: 640,
-	height: 480
+	width: 1366,
+	height: 768
 });
 
+Keyboard.initialize();
 
-export const manifest:AssetsManifest = {
-	bundles: [
-		{
-			name : "bundleCharacter",
-			assets:
-			{
-				"Sonic" : "./sonic-adventure.png",
-				"Clampy" : "./clampy.png",
-			}
+window.addEventListener("resize", ()=>{
+		
+		const scaleX =  window.innerWidth / app.screen.width;
+		const scaleY =	window.innerHeight / app.screen.height;
+		const scale = Math.min(scaleX, scaleY);
 
-		},
-	]
-}
+		const gameWidth = app.screen.width * scale;
+		const gameHeight = app.screen.height * scale;
 
-async function init() {
+		const marginHorizontal = (window.innerWidth - gameWidth) / 2;
+		const marginVertical = (window.innerHeight - gameHeight) / 2;
 
-	await Assets.init({ manifest: manifest });
+		app.view.style.width = gameWidth + "px";
+		app.view.style.height = gameHeight + "px";
 
-	await Assets.loadBundle("bundleCharacter");
+		app.view.style.marginLeft = marginHorizontal + "px";
+		app.view.style.marginRight = marginHorizontal + "px";
+		
+		app.view.style.marginTop = marginVertical + "px";
+		app.view.style.marginBottom = marginVertical + "px";
 
-	const sonic: Sprite = Sprite.from("sonic-adventure.png")
+});
+window.dispatchEvent(new Event("resize"));
 
-	app.stage.addChild(sonic);
-}
+	
+await Assets.init({ manifest: manifest });
+await Assets.loadBundle("bundleCharacter");
+await Assets.loadBundle("sonicAnimation");
+await Assets.loadBundle("menuUI");
 
-init();
+const escena1: Scene = new Scene();
+
+app.stage.addChild(escena1);
+Ticker.shared.add((deltaFrame)=>{
+	escena1.update(Ticker.shared.deltaMS, deltaFrame)
+})
