@@ -2,6 +2,7 @@ import { Application, Assets, Ticker } from 'pixi.js'
 import { manifest } from './manifest';
 import { Scene } from './Scene';
 import { Keyboard } from './utills/Keyboard';
+import { Group } from 'tweedle.js';
 
 
 const app = new Application<HTMLCanvasElement>({
@@ -49,5 +50,6 @@ const escena1: Scene = new Scene();
 
 app.stage.addChild(escena1);
 Ticker.shared.add((deltaFrame)=>{
+	Group.shared.update()
 	escena1.update(Ticker.shared.deltaMS, deltaFrame)
 })

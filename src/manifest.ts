@@ -8,7 +8,11 @@ export const manifest: AssetsManifest = {
 				"Sonic": "./sonic-adventure.png",
 				"Clampy": "./clampy.png",
 				"Suelo": "suelo-nivel1.png",
-				"plataforma": "plataforma.png"
+				"plataforma": "plataforma.png",
+				"Enemigo": "enemigo.png",
+				"Balas": "Balas.png",
+				"Piedra": "Piedra.png",
+				"Pinchos": "Pinchos.png"
 			}
 		},
 		{

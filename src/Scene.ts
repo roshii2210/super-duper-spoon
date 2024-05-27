@@ -1,114 +1,128 @@
 import { Container, Sprite, Texture} from "pixi.js";
-import { SonicClampy } from "./SonicClampy";
+import { Player } from "./Player";
 import { IUpdateable } from "./IUpdateable";
-import { Keyboard } from "./utills/Keyboard";
 import { Platform } from "./Platform";
 import { checkCollision } from "./IHitbox";
-//import { Menu } from "./menu";
-
+import { PajaroEnemigo } from "./PajaroEnemigo";
+import { EnemigoComun } from "./EnemigoComun";
+import { Pinchos } from "./Pinchos";
 
 
 export class Scene extends Container implements IUpdateable{
 
-    //private sonicRuns: AnimatedSprite
-    private sonicandClampy: SonicClampy = new SonicClampy;
-    private texturaSuelo: Texture = Texture.from("Suelo");
-    private suelo: Sprite = new Sprite(this.texturaSuelo);
-    plataforma1: Platform;
+    private sonicandClampy: Player
+    private texturaSuelo: Texture
+    private suelo: Sprite
+    private plataforma1: Platform;
+    private world: Container;
+    private pajaroEnemigo: PajaroEnemigo
+    private enemigoComun: EnemigoComun
+    private pajaroEnemigo1: PajaroEnemigo;
+    private plataforma2: Platform;
+    private pinchos1: Pinchos;
+
+
+
     constructor(){
         super();
+        this.pinchos1 = new Pinchos
+        this.pinchos1.position.set(2500,450)
 
+        this.sonicandClampy = new Player()
+
+        this.texturaSuelo = Texture.from("Suelo")
+        this.suelo = new Sprite(this.texturaSuelo)
         this.suelo.y = 500;
-        
+
+        this.pajaroEnemigo = new PajaroEnemigo()
+        this.pajaroEnemigo.position.set(2000, 0);
+
+        this.pajaroEnemigo1 = new PajaroEnemigo()
+        this.pajaroEnemigo1.position.set(3000, 0);
+
+        this.enemigoComun = new EnemigoComun()
+        this.enemigoComun.position.set(800, 500)
+
+        this.world = new Container;
 
         this.plataforma1 = new Platform();
-
-        /*this.sonicRuns = new AnimatedSprite(
-            [
-                Texture.from("Sonic01"),
-                Texture.from("Sonic02"),
-                Texture.from("Sonic03"),
-                Texture.from("Sonic04"),
-                Texture.from("Sonic05"),
-                Texture.from("Sonic06"),
-                Texture.from("Sonic07"),
-                Texture.from("Sonic08"),
-                Texture.from("Sonic09"),
-                Texture.from("Sonic10"),
-            ], false
-        )
-
-        this.addChild(this.sonicRuns)
-        this.sonicRuns.play();*/
-
-	    
-
         this.plataforma1.scale.set(1,0.7);
         this.plataforma1.position.set(300, 350);
-        
 
-	    this.addChild(this.suelo, this.plataforma1);
+        this.plataforma2 = new Platform();
+        this.plataforma2.scale.set(1,0.7);
+        this.plataforma2.position.set(1500, 350);
 
-        this.addChild(this.sonicandClampy);
+	    this.world.addChild(this.suelo, this.plataforma1,
+             this.plataforma2, this.pinchos1, this.sonicandClampy, this.pajaroEnemigo,
+              this.pajaroEnemigo1, this.enemigoComun);
+        this.addChild(this.world);
+   
         this.sonicandClampy.position.set(200, 500);
-        
-
-        //const myMenu1: Menu = new Menu()
-
-        //this.addChild(myMenu1)
+        this.enemigoComun.initializeMovement()
+        this.pajaroEnemigo.initializeMovement();
+        this.plataforma2.movement();
 
     }
- 
-    
+
     update(deltaTime: number, _deltaFrame: number): void {
-        const dt = deltaTime / 1000
-        this.sonicandClampy.update(dt)
-        if(Keyboard.state.get("KeyD")){
-            this.sonicandClampy.speed.x = 250
-            this.sonicandClampy.scale.x = 1
-        }else if(Keyboard.state.get("KeyA")){
-            this.sonicandClampy.speed.x = -250
-            this.sonicandClampy.scale.x = -1
-        } 
+        this.sonicandClampy.update(deltaTime)
 
-        if(this.sonicandClampy.y > this.suelo.y){ 
+        if(this.sonicandClampy.y > this.suelo.y){
+            this.sonicandClampy.canJump = true
             this.sonicandClampy.y = this.suelo.y
-            this.sonicandClampy.speed.y = 0
+            this.sonicandClampy.acceleration.y = 0
         }
 
-        if((Keyboard.state.get("Space")) && (this.sonicandClampy.speed.y == 0)){
 
-            this.sonicandClampy.speed.y = -650
-            this.sonicandClampy.acceleration.y = 1200
+        this.handleOneWayCollision(this.sonicandClampy, this.plataforma1)
+        this.handleOneWayCollision(this.sonicandClampy, this.plataforma2)
 
-        }
+        this.world.x = -this.sonicandClampy.x * this.worldTransform.a + 455;
 
-        //console.log(this.PhysSonic.speed.y)
+        
+       if(checkCollision(this.sonicandClampy, this.pajaroEnemigo)){
+            console.log("good good")
+       }
 
-        const overlap = checkCollision(this.sonicandClampy, this.plataforma1)
-        if (overlap != null)
+       this.pajaroEnemigo1.update(deltaTime, this.sonicandClampy.x)
+    }
+
+    handleOneWayCollision(player: Player, platform: Platform) {
+        const collision = checkCollision(player, platform);
+        const playerBottom = player.getHitbox().bottom;
+        const platformTop = platform.getHitbox().top;
+        const gravity = 1200
+
+        if (collision)
         {
-            if (overlap.width < overlap.height)
+            // Verifica si el jugador viene desde arriba
+            if (player.speed.y > 0 && playerBottom - player.speed.y <= platformTop)
             {
-                if (this.sonicandClampy.x > this.plataforma1.x)
+                this.sonicandClampy.y -= collision.height // Coloca al jugador justo encima de la plataforma
+                this.sonicandClampy.acceleration.y = 0; // Detiene la velocidad vertical
+                this.sonicandClampy.speed.y = 0;
+                this.sonicandClampy.canJump = true
+
+                if (player.y > platform.y)
                 {
-                    this.sonicandClampy.x += overlap.width;
-                }else if (this.sonicandClampy.x < this.plataforma1.x)
-                {
-                    this.sonicandClampy.x -= overlap.width
-                }
-            }else
-            {
-                if (this.sonicandClampy.y > this.plataforma1.y)
-                {
-                    this.sonicandClampy.y -= overlap.height;
-                    this.sonicandClampy.speed.y = 0;
-                }else if (this.sonicandClampy.y < this.plataforma1.y)
-                {
-                    this.sonicandClampy.y += overlap.height
+                    player.y += collision.height
+                    player.speed.y = gravity / 2;
                 }
             }
+        }else if (playerBottom == platformTop && !collision) {
+           // Permitir que el jugador caiga cuando no hay colisión
+            player.acceleration.y = gravity;
+            if(this.sonicandClampy.y >= this.suelo.y)
+            {
+                player.acceleration.y = 0
+            }
         }
+
+        if(checkCollision(this.sonicandClampy, this.pinchos1)){
+            console.log("game over")
+        }
+
     }
-;
-};
+
+}
